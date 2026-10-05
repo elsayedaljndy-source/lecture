@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>مُفرِّغ المحاضرات</title>
+<link rel="manifest" href="/manifest.json"><meta name="theme-color" content="#111827"><link rel="icon" href="/static/icon-192.png"><link rel="apple-touch-icon" href="/static/icon-192.png">
+<style>
+*{box-sizing:border-box}body{margin:0;background:#f3f6fb;color:#182235;font-family:Tahoma,Arial,sans-serif}.app{max-width:820px;margin:auto;padding:16px}header{background:#111827;color:#fff;border-radius:22px;padding:22px;display:flex;gap:14px;align-items:center;margin-bottom:16px}.logo{font-size:40px}h1{margin:0 0 7px;font-size:25px}header p{margin:0;color:#cbd5e1}.card{background:#fff;border-radius:18px;padding:20px;margin:14px 0;box-shadow:0 5px 20px #0f172a0d}h2{font-size:18px;margin:0 0 15px}.drop{border:2px dashed #94a3b8;border-radius:16px;min-height:150px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:9px;text-align:center;cursor:pointer;padding:14px;transition:.15s}.drop.over{border-color:#2563eb;background:#eff6ff}.drop input{max-width:100%}.drop .big{font-size:35px}.muted{color:#64748b;font-size:13px}.modes{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}.mode,button{border:0;border-radius:11px;padding:13px;font-size:14px;cursor:pointer;background:#e7edf6;color:#172033}.mode.active{background:#111827;color:white}.primary{width:100%;background:#2563eb;color:#fff;font-weight:bold;font-size:16px;margin-top:14px;padding:15px}button:disabled{opacity:.45;cursor:not-allowed}.status{color:#475569;text-align:center;line-height:1.7}.status.err{color:#b91c1c}.warn{background:#fffbeb;border:1px solid #fcd34d;color:#92400e;border-radius:12px;padding:10px 14px;font-size:13px;line-height:1.8;margin-bottom:12px}.result{white-space:pre-wrap;line-height:2;background:#f8fafc;border:1px solid #dbe3ef;border-radius:14px;padding:16px;min-height:130px;overflow-wrap:anywhere}.actions{display:flex;gap:8px;flex-wrap:wrap}.actions button{flex:1}.hidden{display:none}.notice{font-size:13px;color:#64748b;line-height:1.8}.bar{height:8px;background:#e5e7eb;border-radius:10px;overflow:hidden;margin-top:12px}.bar div{height:100%;width:0;background:#2563eb;transition:width .4s}textarea.hint{width:100%;margin-top:12px;border:1px solid #dbe3ef;border-radius:11px;padding:10px;font:inherit;font-size:14px;resize:vertical;min-height:52px}.cancel{background:#fee2e2;color:#991b1b;width:100%;margin-top:10px}.status.warnmsg{color:#92400e}.row{display:flex;gap:8px;margin-top:12px}.row select{flex:1;padding:10px;border-radius:11px;border:1px solid #dbe3ef;font:inherit}.opt{display:block;margin-top:10px;font-size:14px}.hi{display:flex;gap:8px;align-items:center;padding:10px 0;border-bottom:1px solid #eef2f7}.hi span{flex:1;overflow-wrap:anywhere;font-size:14px}.hi button{padding:8px 12px}summary{cursor:pointer}@media(max-width:560px){.modes{grid-template-columns:1fr}.app{padding:10px}header{padding:17px}.actions{flex-direction:column}}
+</style></head>
+<body><div class="app">
+<header><div class="logo">🎙️</div><div><h1>مُفرِّغ المحاضرات</h1><p>حوّل تسجيلاتك الصوتية إلى نص عربي</p></div></header>
+<div id="warn" class="warn hidden"></div>
+<section class="card"><h2>١. اختار ملف المحاضرة</h2><label class="drop" id="drop"><span class="big">📁</span><b>اختار ملف صوت أو فيديو — أو اسحبه هنا</b><span class="muted" id="limit">MP3 · M4A · WAV · OGG · MP4</span><input id="file" type="file" accept="audio/*,video/*,.m4a,.ogg,.flac,.opus,.mkv"></label><p id="fileinfo" class="muted"></p><p id="est" class="muted"></p><audio id="player" controls class="hidden" style="width:100%;margin-top:10px"></audio></section>
+<section class="card"><h2>٢. اختار شكل الناتج</h2><div class="modes"><button class="mode active" data-mode="organized">📚 نص بفقرات</button><button class="mode" data-mode="literal">📝 شبه حرفي</button><button class="mode" data-mode="summary">📌 ملخص + النص</button><button class="mode" data-mode="study">🎓 مذاكرة: ملخص + أسئلة + مصطلحات</button></div>
+<div class="row"><select id="subj"><option value="">📚 اختار مادة محفوظة…</option></select><button id="subjSave">💾 حفظ كمادة</button><button id="subjDel">🗑</button></div>
+<textarea id="hint" class="hint" maxlength="400" placeholder="اختياري: اكتب أسماء ومصطلحات متوقعة في المحاضرة (مثال: خوارزمية، Python، د. أحمد) عشان الدقة تتحسن"></textarea>
+<label class="opt"><input type="checkbox" id="stamps" checked> ⏱ إضافة توقيت قبل كل جزء (عشان ترجع للمكان في التسجيل)</label><label class="opt"><input type="checkbox" id="enh"> 🔊 تحسين الصوت (للتسجيلات الضعيفة أو اللي فيها دوشة)</label></section>
+<section class="card"><h2>٣. حوّل الصوت إلى نص</h2><button id="go" class="primary" disabled>ابدأ التفريغ 🎙️</button><div id="progress" class="bar hidden"><div id="bar"></div></div><p id="status" class="status">اختار ملف عشان تبدأ.</p><div id="wmsg" class="warn hidden"></div><button id="cancel" class="cancel hidden">⏹ إلغاء التفريغ</button><div id="result" class="result hidden" contenteditable="true"></div></section>
+<section class="card actions"><button id="copy" disabled>📋 نسخ النص</button><button id="txt" disabled>📄 تنزيل TXT</button><button id="doc" disabled>📝 تنزيل Word</button><button id="save" disabled>💾 حفظ التعديلات</button></section>
+<section class="card"><details id="histBox"><summary><b>🗂 محاضراتي السابقة</b></summary><div id="hist" style="margin-top:12px"></div></details></section>
+<section class="card notice"><b>ملاحظة:</b> التفريغ بيتم عبر خدمة خارجية (Groq أو OpenAI حسب الإعداد)، فالملف بيتم إرساله لها. المفتاح محفوظ على الخادم فقط؛ لا تشاركه مع أي شخص.</section>
+</div>
+<script>
+const $=id=>document.getElementById(id);
+const _f=window.fetch;window.fetch=async(...a)=>{const r=await _f(...a);if(r.status===401)location.href='/login';return r};
+if('serviceWorker' in navigator)navigator.serviceWorker.register('/sw.js').catch(()=>{});
+let mode='organized',file=null,maxMB=500,busy=false,curJob=null,price=0.006,histId=null;
+let OK=['.mp3','.m4a','.wav','.webm','.mp4','.mpeg','.mpga','.ogg','.flac','.aac','.opus','.mov','.mkv'];
+
+fetch('/health').then(r=>r.json()).then(h=>{
+  maxMB=h.max_mb;OK=h.allowed||OK;price=h.price_per_min||price;if(!h.ffmpeg)$('enh').disabled=true;
+  $('limit').textContent=`MP3 · M4A · WAV · OGG · MP4 — الحد الأقصى ${maxMB}MB`;
+  const w=[];
+  if(!h.key_set)w.push(`⚠️ مفتاح ${h.key_name} ناقص أو غلط (لازم يبدأ بـ ${h.key_prefix}).`);
+  if(!h.ffmpeg)w.push('⚠️ ffmpeg غير مثبّت: الحد الأقصى 24MB ومفيش تقسيم تلقائي للمحاضرات الطويلة.');
+  if(w.length){$('warn').innerHTML=w.join('<br>');$('warn').classList.remove('hidden')}
+}).catch(()=>{});
+
+document.querySelectorAll('.mode').forEach(b=>b.onclick=()=>{document.querySelectorAll('.mode').forEach(x=>x.classList.remove('active'));b.classList.add('active');mode=b.dataset.mode});
+
+function setFile(f){
+  if(!f)return;
+  const ext=(f.name.match(/\.[^.]+$/)||[''])[0].toLowerCase();
+  if(!OK.includes(ext)){file=null;$('go').disabled=true;setStatus('صيغة الملف غير مدعومة. جرّب MP3 أو M4A أو WAV أو MP4.',true);return}
+  if(f.size>maxMB*1048576){file=null;$('go').disabled=true;setStatus(`الملف أكبر من ${maxMB}MB.`,true);return}
+  file=f;
+  $('fileinfo').textContent=`${f.name} — ${(f.size/1048576).toFixed(1)} MB`;
+  if($('player').src)URL.revokeObjectURL($('player').src);
+  $('player').src=URL.createObjectURL(f);$('player').classList.remove('hidden');
+  $('go').disabled=busy;setStatus('الملف جاهز. اضغط ابدأ التفريغ.');
+}
+$('file').onchange=()=>setFile($('file').files[0]);
+['dragenter','dragover'].forEach(e=>$('drop').addEventListener(e,ev=>{ev.preventDefault();$('drop').classList.add('over')}));
+['dragleave','drop'].forEach(e=>$('drop').addEventListener(e,ev=>{ev.preventDefault();$('drop').classList.remove('over')}));
+$('drop').addEventListener('drop',ev=>setFile(ev.dataTransfer.files[0]));
+
+function setStatus(t,err){$('status').textContent=t;$('status').classList.toggle('err',!!err)}
+function setBar(p){$('bar').style.width=p+'%'}
+function enableOut(on){['copy','txt','doc','save'].forEach(x=>$(x).disabled=!on)}
+window.addEventListener('beforeunload',e=>{if(busy){e.preventDefault();e.returnValue=''}});
+
+function upload(fd){
+  return new Promise((res,rej)=>{
+    const x=new XMLHttpRequest();x.open('POST','/transcribe');
+    x.upload.onprogress=e=>{if(e.lengthComputable){const p=Math.round(e.loaded/e.total*100);setBar(p*0.15);setStatus(`جاري رفع الملف… ${p}%`)}};
+    x.onload=()=>{if(x.status===401){location.href='/login';return}let j={};try{j=JSON.parse(x.responseText)}catch{}x.status<300?res(j):rej(Error(j.error||'فشل رفع الملف'))};
+    x.onerror=()=>rej(Error('Failed to fetch'));
+    x.send(fd);
+  });
+}
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+
+// متابعة عملية شغالة (ويكمّل بعد تحديث الصفحة لأن رقم العملية محفوظ)
+async function follow(id){
+  curJob=id;localStorage.setItem('lt_job',id);
+  busy=true;$('go').disabled=true;enableOut(false);$('wmsg').classList.add('hidden');
+  $('progress').classList.remove('hidden');$('cancel').classList.remove('hidden');$('result').classList.add('hidden');
+  let fails=0;
+  try{
+    while(true){
+      await sleep(1500);
+      let j;
+      try{
+        const r=await fetch('/status/'+id);j=await r.json();
+        if(!r.ok){const e=Error(j.error||'فشل متابعة العملية');e.fatal=true;throw e}
+        fails=0;
+      }catch(e){
+        if(e.fatal)throw e;
+        if(++fails>=10){const k=Error('انقطع الاتصال بالخادم. العملية ممكن تكون لسه شغالة؛ حدّث الصفحة لما الخادم يرجع.');k.keep=true;throw k}
+        setStatus('الاتصال ضعيف… بحاول تاني');continue;
+      }
+      if(j.status==='error')throw Error(j.error);
+      setStatus(j.stage);setBar(Math.max(15,j.progress));
+      if(j.status==='done'){
+        $('result').textContent=j.text;$('result').classList.remove('hidden');
+        if(j.warning){$('wmsg').textContent='⚠️ '+j.warning;$('wmsg').classList.remove('hidden')}
+        const words=j.text.split(/\s+/).filter(Boolean).length;
+        setBar(100);setStatus(`تم التفريغ (${words} كلمة). تقدر تعدّل النص قبل ما تنزّله.`);enableOut(true);histId=id;loadHist();
+        localStorage.removeItem('lt_job');break;
+      }
+    }
+  }catch(e){
+    if(!e.keep)localStorage.removeItem('lt_job');
+    setStatus(e.message.includes('Failed to fetch')?'مش قادر أوصل للخادم. تأكد إنك شغّلت الخادم وفتحت الموقع من عنوانه.':e.message,true);setBar(0);
+  }finally{busy=false;$('go').disabled=!file;$('cancel').classList.add('hidden')}
+}
+
+$('go').onclick=async()=>{
+  if(!file||busy)return;
+  busy=true;$('go').disabled=true;$('progress').classList.remove('hidden');setBar(0);
+  try{
+    const fd=new FormData();fd.append('audio',file);fd.append('mode',mode);fd.append('hint',$('hint').value);fd.append('title',file.name.replace(/\.[^.]+$/,''));fd.append('stamps',$('stamps').checked?'1':'0');fd.append('enhance',$('enh').checked?'1':'0');
+    const {job_id}=await upload(fd);
+    busy=false;await follow(job_id);
+  }catch(e){
+    busy=false;$('go').disabled=false;setBar(0);
+    setStatus(e.message.includes('Failed to fetch')?'مش قادر أوصل للخادم. تأكد إنك شغّلت الخادم وفتحت الموقع من عنوانه.':e.message,true);
+  }
+};
+$('cancel').onclick=async()=>{if(!curJob)return;$('cancel').disabled=true;setStatus('جاري الإلغاء بعد الجزء الحالي…');try{await fetch('/cancel/'+curJob,{method:'POST'})}catch{}$('cancel').disabled=false};
+
+// استكمال عملية كانت شغالة قبل تحديث الصفحة
+const saved=localStorage.getItem('lt_job');
+if(saved){setStatus('بكمّل متابعة تفريغ كان شغال…');follow(saved)}
+
+$('copy').onclick=async()=>{
+  try{await navigator.clipboard.writeText($('result').innerText);setStatus('تم نسخ النص.')}
+  catch{const r=document.createRange();r.selectNodeContents($('result'));const s=getSelection();s.removeAllRanges();s.addRange(r);document.execCommand('copy');setStatus('تم نسخ النص.')}
+};
+function save(blob,name){const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)}
+$('txt').onclick=()=>save(new Blob(['\ufeff'+$('result').innerText],{type:'text/plain;charset=utf-8'}),'تفريغ-المحاضرة.txt');
+$('doc').onclick=async()=>{
+  try{
+    const r=await fetch('/export/docx',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:$('result').innerText})});
+    if(!r.ok)throw Error((await r.json()).error||'فشل إنشاء ملف Word');
+    save(await r.blob(),'تفريغ-المحاضرة.docx');
+  }catch(e){setStatus(e.message,true)}
+};
+
+// ---- تقدير التكلفة ----
+const hms=sec=>{sec=Math.round(sec);return [Math.floor(sec/3600),Math.floor(sec%3600/60),sec%60].map(x=>String(x).padStart(2,'0')).join(':')};
+$('player').onloadedmetadata=()=>{const d=$('player').duration;if(isFinite(d))$('est').textContent=`⏳ المدة ${hms(d)} — `+(price>0?`تكلفة التفريغ تقريبًا $${(d/60*price).toFixed(2)} (تقدير تقريبي).`:'التفريغ مجاني ضمن الحد اليومي (حوالي 8 ساعات صوت).')};
+
+// ---- المواد والمصطلحات المحفوظة (على جهازك فقط) ----
+const getSubj=()=>{try{return JSON.parse(localStorage.getItem('lt_subj')||'{}')}catch{return{}}};
+function drawSubj(sel){const o=getSubj(),s=$('subj');s.length=1;Object.keys(o).forEach(k=>s.add(new Option(k,k)));if(sel)s.value=sel}
+$('subj').onchange=()=>{const v=$('subj').value;if(v)$('hint').value=getSubj()[v]||''};
+$('subjSave').onclick=()=>{const t=$('hint').value.trim();if(!t){setStatus('اكتب المصطلحات الأول.',true);return}const n=(prompt('اسم المادة؟ (مثال: علم اللغة)')||'').trim();if(!n)return;const o=getSubj();o[n]=t;localStorage.setItem('lt_subj',JSON.stringify(o));drawSubj(n);setStatus('تم حفظ المادة.')};
+$('subjDel').onclick=()=>{const v=$('subj').value;if(!v)return;const o=getSubj();delete o[v];localStorage.setItem('lt_subj',JSON.stringify(o));drawSubj()};
+drawSubj();
+
+// ---- سجل المحاضرات ----
+const MODES={organized:'نص بفقرات',literal:'شبه حرفي',summary:'ملخص + النص',study:'مذاكرة'};
+async function loadHist(){
+  try{
+    const items=await (await fetch('/history')).json(),box=$('hist');box.textContent='';
+    if(!items.length){box.textContent='لسه مفيش محاضرات محفوظة.';return}
+    items.forEach(it=>{
+      const row=document.createElement('div');row.className='hi';
+      const sp=document.createElement('span');sp.textContent=`${it.title} — ${MODES[it.mode]||''} — ${it.words} كلمة — ${new Date(it.created*1000).toLocaleDateString('ar-EG')}`;
+      const o=document.createElement('button');o.textContent='فتح';o.onclick=()=>openHist(it.id);
+      const d=document.createElement('button');d.textContent='🗑';d.onclick=async()=>{if(confirm('تمسح المحاضرة دي؟')){await fetch('/history/'+it.id,{method:'DELETE'});if(histId===it.id)histId=null;loadHist()}};
+      row.append(sp,o,d);box.append(row);
+    });
+  }catch{}
+}
+async function openHist(id){
+  if(busy)return;
+  const r=await fetch('/history/'+id);if(!r.ok){setStatus('المحاضرة مش موجودة.',true);return}
+  const d=await r.json();histId=id;
+  $('result').textContent=d.text;$('result').classList.remove('hidden');enableOut(true);
+  setStatus(`فتحت: ${d.title}`);$('result').scrollIntoView({behavior:'smooth'});
+}
+$('save').onclick=async()=>{
+  if(!histId)return;
+  const r=await fetch('/history/'+histId,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:$('result').innerText})});
+  setStatus(r.ok?'تم حفظ التعديلات.':'تعذر الحفظ.',!r.ok);
+};
+loadHist();
+</script></body></html>
